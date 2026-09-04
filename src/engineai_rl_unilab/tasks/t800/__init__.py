@@ -17,6 +17,7 @@ def make_engineai_t800_walk_env(
 
 registry.register_env_config("EngineAIT800WalkFlat", ManagerBasedRlEnvCfg)
 registry.register_env("EngineAIT800WalkFlat", make_engineai_t800_walk_env, sim_backend="mujoco")
+registry.register_env("EngineAIT800WalkFlat", make_engineai_t800_walk_env, sim_backend="mjwarp")
 
 
 __all__ = ["make_engineai_t800_walk_env"]

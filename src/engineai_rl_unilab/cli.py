@@ -30,7 +30,9 @@ SCRIPT_NAMES = {
 }
 SUPPORTED_SIMS = ("mujoco", "mjwarp")
 
-CONF_DIR = Path(__file__).resolve().parent / "conf"
+# Per-algo config trees, mirroring UniLab's own conf/<algo>/ layout; the CLI
+# appends conf/<algo> to the UniLab config search path via Hydra --config-dir.
+CONF_ROOT = Path(__file__).resolve().parent / "conf"
 _REGISTRY_PACKAGE = "engineai_rl_unilab.tasks"
 _EXTRA_PACKAGES_ENV = "UNILAB_EXTRA_REGISTRY_PACKAGES"
 
@@ -55,7 +57,8 @@ def _build_command(mode: str, argv: Sequence[str] | None) -> list[str]:
     script = _unilab_package_root() / "scripts" / SCRIPT_NAMES[args.algo]
     if not script.is_file():
         raise SystemExit(f"UniLab entrypoint script not found: {script}")
-    owner_yaml = CONF_DIR / "task" / args.task / f"{args.sim}.yaml"
+    conf_dir = CONF_ROOT / args.algo
+    owner_yaml = conf_dir / "task" / args.task / f"{args.sim}.yaml"
     if not owner_yaml.is_file():
         raise SystemExit(
             f"No owner config exists for algo={args.algo}, task={args.task}, "
@@ -71,7 +74,7 @@ def _build_command(mode: str, argv: Sequence[str] | None) -> list[str]:
         sys.executable,
         str(script),
         "--config-dir",
-        str(CONF_DIR),
+        str(conf_dir),
         *generated,
         *overrides,
     ]
