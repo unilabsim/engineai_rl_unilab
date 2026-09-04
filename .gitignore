@@ -10,10 +10,5 @@ logs/
 outputs/
 wandb/
 
-# Robot binary assets are pulled from Hugging Face on first use
-# (engineai_rl_unilab.assets.ensure_t800_assets); keep them out of git.
-assets/robots/t800/assets/
-assets/robots/t800/textures/
-
 # Entrypoint logs written next to cwd by train scripts
 train_*.log
