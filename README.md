@@ -23,12 +23,11 @@ cd engineai_rl_unilab
 uv sync
 ```
 
-`unilab-rl==1.0.0` 从生产 PyPI 解析；`unilab` 当前临时 git-pin 到
-[`Motphys/UniLab@6b9d8a94`](https://github.com/Motphys/UniLab/commit/6b9d8a94aaf59019074029edc68a9c318cf8d4d2)（PR #1496
-合入提交），因为 PyPI 的 unilab 0.1.0 自身 pin 死 `unilab-rl==0.2.0`。待包含
-#1496 的 unilab 版本发布到 PyPI 后，请把 `pyproject.toml` 改回
-`unilab[mujoco]==x.y.z` 并删除 `[tool.uv.sources]` 中的 git pin。pip 用户：
-`pip install "unilab-rl==1.0.0"` + 从该提交安装 unilab。
+`unilab==1.0.0` 与 `unilab-rl==1.0.0` 均从生产 PyPI 解析。pip 用户的等价命令：
+
+```bash
+pip install "unilab[mujoco]==1.0.0"
+```
 
 ## 训练
 
