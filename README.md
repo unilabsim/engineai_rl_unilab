@@ -1,6 +1,6 @@
 # engineai_rl_unilab
 
-EngineAI 机器人 RL 训练仓库，**只依赖 UniLab 的包分发（TestPyPI），不依赖 UniLab 源码**。
+EngineAI 机器人 RL 训练仓库，**只依赖 UniLab 的包分发（PyPI），不依赖 UniLab 源码**。
 首个示例任务：EngineAI T800 25-DoF walk-flat（Manager-Based PPO / SAC，MuJoCo 后端；
 SAC 另有 configured-only 的 mjwarp owner）。
 
@@ -23,11 +23,10 @@ cd engineai_rl_unilab
 uv sync
 ```
 
-`unilab` 与 `unilab-rl` 从 TestPyPI 解析（见 `pyproject.toml` 的
-`[tool.uv.sources]`），其余依赖走生产 PyPI。pip 用户的等价命令：
+`unilab` 与 `unilab-rl` 均从生产 PyPI 解析。pip 用户的等价命令：
 
 ```bash
-pip install --extra-index-url https://test.pypi.org/simple/ "unilab[mujoco]==0.1.0"
+pip install "unilab[mujoco]==0.1.0"
 ```
 
 ## 训练
