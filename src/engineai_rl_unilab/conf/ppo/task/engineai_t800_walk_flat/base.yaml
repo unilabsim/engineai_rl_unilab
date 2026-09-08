@@ -115,7 +115,7 @@ env:
           params: {command_name: twist}
         gait_phase:
           func: unilab.tasks.locomotion.g1.manager_terms.G1GaitPhase
-          params: {frequency: 1.5, init_mode: offset_phase}
+          params: {frequency: 1.2, init_mode: offset_phase}
     critic:
       terms:
         base_ang_vel:
@@ -146,7 +146,7 @@ env:
           params: {command_name: twist}
         gait_phase:
           func: unilab.tasks.locomotion.g1.manager_terms.G1GaitPhase
-          params: {frequency: 1.5, init_mode: offset_phase}
+          params: {frequency: 1.2, init_mode: offset_phase}
         base_lin_vel:
           func: unilab.envs.mdp.builtin_sensor
           params: {sensor_name: pelvis_local_linvel}
@@ -189,7 +189,7 @@ env:
       resampling_time_range: [20.0, 20.0]
       heading_command: false
       heading_control_stiffness: 0.5
-      rel_standing_envs: 0.0
+      rel_standing_envs: 0.1
       rel_heading_envs: 0.0
       rel_world_envs: 0.0
       rel_forward_envs: 0.0
@@ -238,6 +238,26 @@ env:
     base_height:
       func: unilab.envs.mdp.root_height_below_minimum
       params: {minimum_height: 0.7165}
+  metrics:
+    peak_foot_force_bw:
+      func: engineai_rl_unilab.tasks.t800.manager_terms.peak_foot_force_bw
+      params: {body_weight: 833.04}
+      reduce: max
+    touchdown_foot_speed:
+      func: engineai_rl_unilab.tasks.t800.manager_terms.touchdown_foot_speed
+      reduce: max
+    stance_foot_slip_speed:
+      func: engineai_rl_unilab.tasks.t800.manager_terms.stance_foot_slip_speed
+      reduce: mean
+    double_stance_ratio:
+      func: engineai_rl_unilab.tasks.t800.manager_terms.double_stance_metric
+      reduce: mean
+    flight_ratio:
+      func: engineai_rl_unilab.tasks.t800.manager_terms.flight_metric
+      reduce: mean
+    action_acc_l2:
+      func: unilab.envs.mdp.action_acc_l2
+      reduce: mean
 
 reward:
   tracking_lin_vel:
@@ -246,20 +266,40 @@ reward:
     params: {tracking_sigma: 0.25, command_name: twist, sensor_name: pelvis_local_linvel}
   tracking_ang_vel:
     func: unilab.tasks.locomotion.common.sensor_reward_terms.track_ang_vel
-    weight: 0.2
+    weight: 0.4
     params: {tracking_sigma: 0.25, command_name: twist, sensor_name: torso_gyro}
   feet_phase:
-    func: unilab.tasks.locomotion.g1.manager_terms.feet_phase
-    weight: 1.5
+    func: engineai_rl_unilab.tasks.t800.manager_terms.command_gated_feet_phase
+    weight: 1.0
     params:
-      frequency: 1.5
-      swing_height: 0.13
-      tracking_sigma: 0.014
-      min_forward_speed: 0.0
+      frequency: 1.2
+      swing_height: 0.09
+      tracking_sigma: 0.010
       command_name: twist
+      command_threshold: 0.1
+  feet_phase_contact:
+    func: engineai_rl_unilab.tasks.t800.manager_terms.command_gated_feet_phase_contact
+    weight: 0.3
+    params:
+      frequency: 1.2
+      swing_height: 0.09
+      tracking_sigma: 0.010
+      command_name: twist
+      command_threshold: 0.1
+  feet_air_time:
+    func: unilab.tasks.locomotion.common.gait_terms.feet_air_time
+    weight: 0.2
+    params:
+      sensor_groups:
+        - [left_foot_contact_0, left_foot_contact_1, left_foot_contact_2, left_foot_contact_3]
+        - [right_foot_contact_0, right_foot_contact_1, right_foot_contact_2, right_foot_contact_3]
+      threshold_min: 0.08
+      threshold_max: 0.45
+      command_name: twist
+      command_threshold: 0.1
   lin_vel_z:
     func: unilab.tasks.locomotion.common.sensor_reward_terms.lin_vel_z
-    weight: -1.0
+    weight: -2.0
     params: {sensor_name: pelvis_local_linvel}
   ang_vel_xy:
     func: unilab.tasks.locomotion.common.sensor_reward_terms.ang_vel_xy
@@ -267,18 +307,26 @@ reward:
     params: {sensor_name: torso_gyro}
   base_height:
     func: unilab.tasks.locomotion.common.manager_terms.base_height_l2
-    weight: -500.0
-    params: {target_height: 1.0165}
+    weight: -150.0
+    params: {target_height: 1.0}
   orientation:
     func: unilab.tasks.locomotion.common.sensor_reward_terms.orientation
     weight: -5.0
     params: {sensor_name: torso_upvector}
-  penalty_feet_ori:
-    func: unilab.tasks.locomotion.g1.manager_terms.penalty_feet_ori
-    weight: -10.0
+  stance_feet_orientation:
+    func: engineai_rl_unilab.tasks.t800.manager_terms.stance_feet_orientation_l2
+    weight: -5.0
+    params: {pitch_scale: 0.2}
+  excess_foot_force:
+    func: engineai_rl_unilab.tasks.t800.manager_terms.excess_foot_force_l2
+    weight: -2.0
+    params: {body_weight: 833.04, force_threshold_bw: 1.25}
   action_rate:
     func: unilab.envs.mdp.action_rate_l2
     weight: -0.01
+  action_acc:
+    func: unilab.envs.mdp.action_acc_l2
+    weight: -0.002
   pose:
     func: unilab.tasks.locomotion.g1.manager_terms.weighted_pose
     weight: -0.1
@@ -287,4 +335,4 @@ reward:
         _target_: unilab.managers.SceneEntityCfg
         name: robot
         joint_names: [J00_HIP_PITCH_L, J01_HIP_ROLL_L, J02_HIP_YAW_L, J03_KNEE_PITCH_L, J04_ANKLE_PITCH_L, J05_ANKLE_ROLL_L, J06_HIP_PITCH_R, J07_HIP_ROLL_R, J08_HIP_YAW_R, J09_KNEE_PITCH_R, J10_ANKLE_PITCH_R, J11_ANKLE_ROLL_R, J13_SHOULDER_PITCH_L, J14_SHOULDER_ROLL_L, J15_SHOULDER_YAW_L, J16_ELBOW_PITCH_L, J17_ELBOW_YAW_L, J18_SHOULDER_PITCH_R, J19_SHOULDER_ROLL_R, J20_SHOULDER_YAW_R, J21_ELBOW_PITCH_R, J22_ELBOW_YAW_R]
-      pose_weights: [0.01, 1.0, 5.0, 0.01, 5.0, 5.0, 0.01, 1.0, 5.0, 0.01, 5.0, 5.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0]
+      pose_weights: [0.01, 1.0, 5.0, 0.01, 1.0, 5.0, 0.01, 1.0, 5.0, 0.01, 1.0, 5.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0]
