@@ -74,7 +74,7 @@ uv run engineai-eval --algo ppo --task engineai_t800_motion_tracking --sim mujoc
 ```
 
 MuJoCo owner 声明 140 维 actor、275 维 critic、25 维动作和逐关节 action scale。
-控制频率为 50 Hz，每次控制执行 4 个物理子步，训练 episode 上限为 500 步。
+控制频率为 50 Hz，每次控制执行 3 个物理子步，训练 episode 上限为 500 步，默认训练 15000 轮。
 actor 启用观测噪声、延迟和 encoder bias，critic 保留干净的 privileged observation。
 MuJoCo 使用配置中声明的 DR，算法迭代数和保存间隔也由 owner 声明。
 

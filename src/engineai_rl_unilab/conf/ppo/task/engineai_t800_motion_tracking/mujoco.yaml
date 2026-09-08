@@ -8,7 +8,7 @@ training:
 
 algo:
   num_envs: 1024
-  max_iterations: 30000
+  max_iterations: 15000
   save_interval: 500
   empirical_normalization: true
   obs_groups:
@@ -79,8 +79,8 @@ env:
           - right_foot_contact_1_geom
           - right_foot_contact_2_geom
           - right_foot_contact_3_geom
-  # Four physics substeps per 50 Hz control step (0.02 / 0.005 = 4).
-  sim_dt: 0.005
+  # Three physics substeps per 50 Hz control step (0.02 / 3).
+  sim_dt: 0.006666666666666667
   ctrl_dt: 0.02
   # Keep the motion-tracking horizon at the shared 500 control-step cap.
   # T800 runs its controller at 50 Hz (0.02 s/step), so this is 10 seconds.

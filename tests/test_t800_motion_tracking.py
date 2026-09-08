@@ -31,7 +31,8 @@ def test_mujoco_owner_contract():
     assert cfg.training.task_name == IDENTITY
     assert cfg.training.sim_backend == "mujoco"
     assert cfg.env.max_episode_seconds / cfg.env.ctrl_dt == 500
-    assert cfg.env.ctrl_dt / cfg.env.sim_dt == 4
+    assert cfg.env.ctrl_dt / cfg.env.sim_dt == 3
+    assert cfg.algo.max_iterations == 15000
     for mode in ("train", "eval"):
         command = _build_command(mode, ["--algo", "ppo", "--task", TASK, "--sim", "mujoco"])
         assert f"task={TASK}/mujoco" in command
