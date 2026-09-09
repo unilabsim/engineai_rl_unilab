@@ -75,12 +75,15 @@ uv run engineai-eval --algo ppo --task engineai_t800_motion_tracking --sim mujoc
 
 MuJoCo owner 声明 140 维 actor、275 维 critic、25 维动作和逐关节 action scale。
 控制频率为 50 Hz，每次控制执行 3 个物理子步，训练 episode 上限为 500 步，默认训练 15000 轮。
-actor 启用观测噪声、延迟和 encoder bias，critic 保留干净的 privileged observation。
-MuJoCo 使用配置中声明的 DR，算法迭代数和保存间隔也由 owner 声明。
+采用简化训练基线：1024 环境，每 500 轮保存，actor/critic 均使用干净观测。
+不启用 DR events、观测噪声/延迟、encoder bias、动作延迟或 deadzone。
+保留 motion command 的初始状态随机采样与 adaptive 动作片段采样。
 
-`T800MotionJointPositionActionCfg` 只补充正式版 UniLab 尚未提供的归一化动作
-deadzone（默认 0.005），延迟、encoder 补偿和关节控制仍由 UniLab motion action 执行。
-encoder bias 使用 `unilab.envs.mdp.randomize_encoder_bias`。
+奖励复用 UniLab 的共享 motion terms：action-rate 权重 -0.03，joint-limit 使用
+越限量平方和、权重 -10。`undesired_contacts` 是身体高度低于 0.05 m 的代理惩罚，
+权重 -0.1，不是接触力传感器奖励。这一基线不声明与官方 IsaacLab 任务完全等价。
+
+MuJoCo 回放默认 16 个环境、间距 2；相机和回放 episode 上限由 owner 声明。
 
 任务复用已有 `assets/robots/t800/scene_flat.xml`（stand keyframe 在 scene 中）。
 默认动作是迁移版本的 `dance1_subject2_t800_first18s_mujoco.npz`，随本仓库放在

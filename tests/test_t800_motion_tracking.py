@@ -33,6 +33,36 @@ def test_mujoco_owner_contract():
     assert cfg.env.max_episode_seconds / cfg.env.ctrl_dt == 500
     assert cfg.env.ctrl_dt / cfg.env.sim_dt == 3
     assert cfg.algo.max_iterations == 15000
+    assert cfg.algo.num_envs == 1024
+    assert cfg.algo.save_interval == 500
+    assert not cfg.env.events
+    assert not cfg.env.actions.joint_pos.simulate_action_latency
+    assert "deadzone" not in cfg.env.actions.joint_pos
+    assert cfg.reward.undesired_contacts.weight == -0.1
+    assert cfg.reward.undesired_contacts.params.threshold == 0.05
+    assert (
+        cfg.reward.joint_limit.func
+        == "unilab.tasks.motion_tracking.common.manager_terms.joint_pos_limits"
+    )
+    assert "soft_limit_factor" not in cfg.reward.joint_limit.params
+    assert not cfg.env.observations.actor.get("enable_corruption", False)
+    assert list(cfg.env.observations.critic.terms) == [
+        "command",
+        "motion_anchor_pos_b",
+        "motion_anchor_ori_b",
+        "base_lin_vel",
+        "base_ang_vel",
+        "joint_pos",
+        "joint_vel",
+        "actions",
+        "body_pos",
+        "body_ori",
+    ]
+    for term in cfg.env.observations.actor.terms.values():
+        assert term.get("delay_max_lag", 0) == 0
+        assert "noise" not in term
+        assert "biased" not in term.func
+    assert all("noise" not in term for term in cfg.env.observations.critic.terms.values())
     for mode in ("train", "eval"):
         command = _build_command(mode, ["--algo", "ppo", "--task", TASK, "--sim", "mujoco"])
         assert f"task={TASK}/mujoco" in command
@@ -84,7 +114,7 @@ def test_runtime_reset_step_and_partial_reset(monkeypatch):
         obs, info = env.reset(np.arange(2, dtype=np.int32))
         assert isinstance(obs, dict) and isinstance(info, dict)
         assert env.obs_groups_spec == {"obs": 140, "critic": 275}
-        for _ in range(8):
+        for _ in range(160):
             state = env.step(np.zeros((2, 25), dtype=np.float32))
             assert state.obs["obs"].shape == (2, 140)
             assert state.obs["critic"].shape == (2, 275)
@@ -95,14 +125,13 @@ def test_runtime_reset_step_and_partial_reset(monkeypatch):
         original = raw.copy()
         action.process_actions(raw)
         np.testing.assert_array_equal(raw, original)
-        np.testing.assert_array_equal(action.raw_action, 0.0)
+        np.testing.assert_array_equal(action.raw_action, raw)
+        action.process_actions(np.zeros_like(raw))
+        before = action.processed_action.copy()
         raw[:] = 0.1
         action.process_actions(raw)
-        # One-step latency: the previous deadzoned command is still applied.
-        before = action.processed_action.copy()
-        action.process_actions(np.zeros_like(raw))
+        # Simplest owner adds neither a deadzone nor a fixed control-step delay.
         np.testing.assert_allclose(action.processed_action - before, raw * action.scale, atol=1e-7)
-        action.process_actions(raw)
         action.reset(np.array([0], dtype=np.int32))
         np.testing.assert_array_equal(action.raw_action[0], 0.0)
         np.testing.assert_array_equal(action.raw_action[1], raw[1])
@@ -113,3 +142,17 @@ def test_runtime_reset_step_and_partial_reset(monkeypatch):
         assert all(np.isfinite(value).all() for value in state.obs.values())
     finally:
         env.close()
+
+
+def test_reference_squared_joint_limit_penalty():
+    from types import SimpleNamespace
+
+    from unilab.tasks.motion_tracking.common.manager_terms import joint_pos_limits
+
+    positions = np.array([[-1.2, 8.0, 1.3], [0.0, -8.0, 0.0]])
+    original = positions.copy()
+    data = SimpleNamespace(joint_pos=positions, soft_joint_pos_limits=np.array([[-1.0, 1.0]] * 3))
+    env = SimpleNamespace(scene={"robot": SimpleNamespace(data=data)}, num_envs=2)
+    selection = SimpleNamespace(name="robot", joint_ids=np.array([2, 0]))
+    np.testing.assert_allclose(joint_pos_limits(env, selection), [0.13, 0.0])
+    np.testing.assert_array_equal(positions, original)
