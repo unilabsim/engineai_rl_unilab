@@ -1,0 +1,342 @@
+# @package _global_
+# Simplified T800 baseline: clean observations and shared motion rewards.
+# Preserve 1024 envs and first18s motion; use 3 physics substeps and 15000 iterations.
+# Clean actor/critic, no DR events or delays, and the reference reward semantics.
+# Playback camera and the 22-second playback horizon remain task-specific.
+defaults:
+  # T800 is a standalone motion-tracking task.  Do not inherit the G1 task:
+  # all observations, actions, commands, terminations, and rewards below are
+  # intentionally declared for the 25-DoF T800 model.
+  []
+
+training:
+  task_name: EngineAIT800MotionTracking
+  sim_backend: mujoco
+  play_steps: 1000
+  # Frame the default 4 x 4 playback grid; training.render_spacing is passed
+  # explicitly to the renderer, independently of play_profile.env below.
+  play_env_num: 16
+  render_spacing: 2.0
+  cam_distance: 9.0
+  cam_elevation: -20.0
+  cam_azimuth: 135.0
+  # first18s motion is centered near (2.1, -3.9); add the 4 x 4 grid center (3, 3).
+  cam_lookat: [5.1, -0.9, 0.85]
+  cam_tracking: false
+
+algo:
+  num_envs: 1024
+  max_iterations: 15000
+  save_interval: 500
+  empirical_normalization: true
+  obs_groups:
+    actor: [actor]
+    critic: [critic]
+  algorithm:
+    entropy_coef: 0.005
+    desired_kl: 0.01
+
+env:
+  scene:
+    model_file: assets/robots/t800/scene_flat.xml
+    default_keyframe_name: stand
+    entities:
+      robot:
+        root_body_name: LINK_BASE
+        joint_names: &t800_joints
+          - J00_HIP_PITCH_L
+          - J01_HIP_ROLL_L
+          - J02_HIP_YAW_L
+          - J03_KNEE_PITCH_L
+          - J04_ANKLE_PITCH_L
+          - J05_ANKLE_ROLL_L
+          - J06_HIP_PITCH_R
+          - J07_HIP_ROLL_R
+          - J08_HIP_YAW_R
+          - J09_KNEE_PITCH_R
+          - J10_ANKLE_PITCH_R
+          - J11_ANKLE_ROLL_R
+          - J12_TORSO_YAW
+          - J13_SHOULDER_PITCH_L
+          - J14_SHOULDER_ROLL_L
+          - J15_SHOULDER_YAW_L
+          - J16_ELBOW_PITCH_L
+          - J17_ELBOW_YAW_L
+          - J18_SHOULDER_PITCH_R
+          - J19_SHOULDER_ROLL_R
+          - J20_SHOULDER_YAW_R
+          - J21_ELBOW_PITCH_R
+          - J22_ELBOW_YAW_R
+          - J23_HEAD_PITCH
+          - J24_HEAD_YAW
+        actuator_names: *t800_joints
+        body_names: &tracked_bodies
+          - LINK_BASE
+          - LINK_HIP_ROLL_L
+          - LINK_KNEE_PITCH_L
+          - LINK_ANKLE_ROLL_L
+          - LINK_HIP_ROLL_R
+          - LINK_KNEE_PITCH_R
+          - LINK_ANKLE_ROLL_R
+          - LINK_WAIST_YAW
+          - LINK_SHOULDER_ROLL_L
+          - LINK_ELBOW_YAW_L
+          - LINK_WRIST_END_L
+          - LINK_SHOULDER_ROLL_R
+          - LINK_ELBOW_YAW_R
+          - LINK_WRIST_END_R
+          - LINK_HEAD_YAW
+        geom_names: null
+  # User override: three physics substeps per 50 Hz control step.
+  sim_dt: 0.006666666666666667
+  ctrl_dt: 0.02
+  # Keep the motion-tracking horizon at the shared 500 control-step cap.
+  # T800 runs its controller at 50 Hz (0.02 s/step), so this is 10 seconds.
+  max_episode_seconds: 10.0
+  observations:
+    actor:
+      terms:
+        command:
+          func: unilab.envs.mdp.generated_commands
+          params:
+            command_name: motion
+        motion_anchor_pos_b:
+          func: unilab.tasks.motion_tracking.common.manager_terms.motion_anchor_pos_b
+          params:
+            command_name: motion
+        motion_anchor_ori_b:
+          func: unilab.tasks.motion_tracking.common.manager_terms.motion_anchor_ori_b
+          params:
+            command_name: motion
+        base_lin_vel:
+          func: unilab.envs.mdp.builtin_sensor
+          params:
+            sensor_name: pelvis_local_linvel
+        base_ang_vel:
+          func: unilab.envs.mdp.builtin_sensor
+          params:
+            sensor_name: torso_gyro
+        joint_pos:
+          func: unilab.tasks.motion_tracking.common.manager_terms.motion_joint_pos_rel
+          params:
+            command_name: motion
+        joint_vel:
+          func: unilab.envs.mdp.joint_vel_rel
+        actions:
+          func: unilab.envs.mdp.last_action
+    critic:
+      terms:
+        command:
+          func: unilab.envs.mdp.generated_commands
+          params:
+            command_name: motion
+        motion_anchor_pos_b:
+          func: unilab.tasks.motion_tracking.common.manager_terms.motion_anchor_pos_b
+          params:
+            command_name: motion
+        motion_anchor_ori_b:
+          func: unilab.tasks.motion_tracking.common.manager_terms.motion_anchor_ori_b
+          params:
+            command_name: motion
+        base_lin_vel:
+          func: unilab.envs.mdp.builtin_sensor
+          params:
+            sensor_name: pelvis_local_linvel
+        base_ang_vel:
+          func: unilab.envs.mdp.builtin_sensor
+          params:
+            sensor_name: torso_gyro
+        joint_pos:
+          func: unilab.tasks.motion_tracking.common.manager_terms.motion_joint_pos_rel
+          params:
+            command_name: motion
+        joint_vel:
+          func: unilab.envs.mdp.joint_vel_rel
+        actions:
+          func: unilab.envs.mdp.last_action
+        body_pos:
+          func: unilab.tasks.motion_tracking.common.manager_terms.robot_body_pos_b
+          params:
+            command_name: motion
+        body_ori:
+          func: unilab.tasks.motion_tracking.common.manager_terms.robot_body_ori_b
+          params:
+            command_name: motion
+  policy_observation_group: actor
+  critic_observation_group: critic
+  actions:
+    joint_pos:
+      _target_: unilab.tasks.motion_tracking.common.manager_terms.MotionJointPositionActionCfg
+      entity_name: robot
+      actuator_names: *t800_joints
+      scale:
+        J00_HIP_PITCH_L: 0.5
+        J01_HIP_ROLL_L: 0.2
+        J02_HIP_YAW_L: 0.2
+        J03_KNEE_PITCH_L: 0.5
+        J04_ANKLE_PITCH_L: 0.5
+        J05_ANKLE_ROLL_L: 0.2
+        J06_HIP_PITCH_R: 0.5
+        J07_HIP_ROLL_R: 0.2
+        J08_HIP_YAW_R: 0.2
+        J09_KNEE_PITCH_R: 0.5
+        J10_ANKLE_PITCH_R: 0.5
+        J11_ANKLE_ROLL_R: 0.2
+        J12_TORSO_YAW: 0.2
+        J13_SHOULDER_PITCH_L: 0.2
+        J14_SHOULDER_ROLL_L: 0.2
+        J15_SHOULDER_YAW_L: 0.05
+        J16_ELBOW_PITCH_L: 0.2
+        J17_ELBOW_YAW_L: 0.05
+        J18_SHOULDER_PITCH_R: 0.2
+        J19_SHOULDER_ROLL_R: 0.2
+        J20_SHOULDER_YAW_R: 0.05
+        J21_ELBOW_PITCH_R: 0.2
+        J22_ELBOW_YAW_R: 0.05
+        J23_HEAD_PITCH: 0.2
+        J24_HEAD_YAW: 0.2
+      use_default_offset: true
+      command_name: motion
+      # Match the reference run: immediate action application without a deadzone.
+      simulate_action_latency: false
+  commands:
+    motion:
+      _target_: unilab.tasks.motion_tracking.common.manager_terms.MotionCommandCfg
+      entity_name: robot
+      resampling_time_range: [1.0e9, 1.0e9]
+      params:
+        motion_file: assets/motions/t800/dance1_subject2_t800_first18s_mujoco.npz
+        anchor_body_name: LINK_BASE
+        body_names: *tracked_bodies
+        sampling_mode: adaptive
+        sampling_start_ratio: 0.0
+        truncate_on_clip_end: false
+        pose_range:
+          x: [-0.05, 0.05]
+          y: [-0.05, 0.05]
+          z: [-0.01, 0.01]
+          roll: [-0.1, 0.1]
+          pitch: [-0.1, 0.1]
+          yaw: [-0.2, 0.2]
+        velocity_range:
+          x: [-0.5, 0.5]
+          y: [-0.5, 0.5]
+          z: [-0.2, 0.2]
+          roll: [-0.52, 0.52]
+          pitch: [-0.52, 0.52]
+          yaw: [-0.78, 0.78]
+        joint_position_range: [-0.1, 0.1]
+        joint_default_position_range: [0.0, 0.0]
+  terminations:
+    time_out:
+      func: unilab.envs.mdp.time_out
+      time_out: true
+    anchor_pos:
+      func: unilab.tasks.motion_tracking.common.manager_terms.bad_anchor_pos_z_only
+      params: {command_name: motion, threshold: 0.35}
+    anchor_ori:
+      func: unilab.tasks.motion_tracking.common.manager_terms.bad_anchor_ori
+      params:
+        command_name: motion
+        threshold: 0.8
+        asset_cfg:
+          _target_: unilab.managers.SceneEntityCfg
+          name: robot
+    ee_body_pos:
+      func: unilab.tasks.motion_tracking.common.manager_terms.bad_motion_body_pos_z_only
+      params:
+        command_name: motion
+        threshold: 0.35
+        body_names:
+          - LINK_ANKLE_ROLL_L
+          - LINK_ANKLE_ROLL_R
+          - LINK_WRIST_END_L
+          - LINK_WRIST_END_R
+
+  # The reference run has no domain-randomization event terms.
+  events: {}
+
+reward:
+  motion_global_root_pos:
+    func: unilab.tasks.motion_tracking.common.manager_terms.motion_global_anchor_position_error_exp
+    weight: 0.5
+    params:
+      command_name: motion
+      std: 0.45
+  motion_global_root_ori:
+    func: unilab.tasks.motion_tracking.common.manager_terms.motion_global_anchor_orientation_error_exp
+    weight: 0.5
+    params:
+      command_name: motion
+      std: 0.4
+  motion_body_pos:
+    func: unilab.tasks.motion_tracking.common.manager_terms.motion_relative_body_position_error_exp
+    weight: 1.0
+    params:
+      command_name: motion
+      std: 0.45
+  motion_body_ori:
+    func: unilab.tasks.motion_tracking.common.manager_terms.motion_relative_body_orientation_error_exp
+    weight: 1.0
+    params:
+      command_name: motion
+      std: 0.4
+  motion_body_lin_vel:
+    func: unilab.tasks.motion_tracking.common.manager_terms.motion_global_body_linear_velocity_error_exp
+    weight: 1.0
+    params:
+      command_name: motion
+      std: 1.0
+  motion_body_ang_vel:
+    func: unilab.tasks.motion_tracking.common.manager_terms.motion_global_body_angular_velocity_error_exp
+    weight: 1.0
+    params:
+      command_name: motion
+      std: 3.14
+  motion_joint_pos:
+    func: unilab.tasks.motion_tracking.common.manager_terms.motion_joint_position_error_exp
+    weight: 0.0
+    params:
+      command_name: motion
+      std: 0.2
+  motion_joint_vel:
+    func: unilab.tasks.motion_tracking.common.manager_terms.motion_joint_velocity_error_exp
+    weight: 0.0
+    params:
+      command_name: motion
+      std: 1.0
+  action_rate_l2:
+    func: unilab.envs.mdp.action_rate_l2
+    weight: -0.03
+  joint_limit:
+    func: unilab.tasks.motion_tracking.common.manager_terms.joint_pos_limits
+    weight: -10.0
+    params:
+      asset_cfg:
+        _target_: unilab.managers.SceneEntityCfg
+        name: robot
+        joint_names: .*
+  undesired_contacts:
+    func: unilab.tasks.motion_tracking.common.manager_terms.undesired_body_contacts
+    weight: -0.1
+    params:
+      command_name: motion
+      threshold: 0.05
+      body_names:
+      - LINK_BASE
+      - LINK_HIP_ROLL_L
+      - LINK_KNEE_PITCH_L
+      - LINK_HIP_ROLL_R
+      - LINK_KNEE_PITCH_R
+      - LINK_WAIST_YAW
+      - LINK_SHOULDER_ROLL_L
+      - LINK_ELBOW_YAW_L
+      - LINK_SHOULDER_ROLL_R
+      - LINK_ELBOW_YAW_R
+      - LINK_HEAD_YAW
+
+play_profile:
+  enabled: true
+  env:
+    render_spacing: 2.0
+    max_episode_seconds: 22.0
