@@ -41,10 +41,10 @@ cd engineai_rl_unilab
 uv sync
 ```
 
-`unilab==1.1.0` resolves from production PyPI. The pip equivalent:
+`unilab==1.1.0` resolves from production PyPI. The `uv pip` equivalent:
 
 ```bash
-pip install "unilab[mujoco]==1.1.0"
+uv pip install "unilab[mujoco]==1.1.0" "unisim-core>=1.1.3,<1.1.5"
 ```
 
 ## Training

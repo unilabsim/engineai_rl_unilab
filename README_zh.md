@@ -42,10 +42,10 @@ cd engineai_rl_unilab
 uv sync
 ```
 
-`unilab==1.1.0` 从生产 PyPI 解析。pip 用户的等价命令：
+`unilab==1.1.0` 从生产 PyPI 解析。`uv pip` 用户的等价命令：
 
 ```bash
-pip install "unilab[mujoco]==1.1.0"
+uv pip install "unilab[mujoco]==1.1.0" "unisim-core>=1.1.3,<1.1.5"
 ```
 
 ## 训练
