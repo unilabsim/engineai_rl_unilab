@@ -10,6 +10,10 @@
   <a href="https://www.apache.org/licenses/LICENSE-2.0"><img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="Apache-2.0 License"></a>
 </p>
 
+| ![walk](assets/teaser/walk.png) | ![dance1](assets/teaser/dance1.png) | ![dance2](assets/teaser/dance2.png) |
+|:-------------------------------:|:-----------------------------------:|:-----------------------------------:|
+|              walk               |               dance1                |               dance2                |
+
 `engineai_rl_unilab` 完全构建在 UniLab 的 PyPI 包分发之上，不依赖 UniLab 源码。
 训练、回放、runner/learner/collector 全部来自已发布的 `unilab` wheel；本仓库只
 携带任务代码（manager terms）、owner 配置和机器人 XML 资产。
