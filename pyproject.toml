@@ -13,7 +13,7 @@ requires-python = ">=3.10,<3.14"
 dependencies = [
     # UniLab and unilab-rl are formally released on PyPI; every dependency
     # resolves from the default index except torch (cu128 index below).
-    "unilab[mujoco]==1.0.0",
+    "unilab[mujoco]==1.1.0",
     "unilab-rl==1.0.0",
     # Re-declared as a direct dependency so the cu128 index source below
     # applies (tool.uv.sources only affects direct dependencies); pins mirror
