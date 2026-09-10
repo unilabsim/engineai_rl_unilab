@@ -386,6 +386,7 @@ dependencies = [
     { name = "torch", version = "2.9.0", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine == 'aarch64' and sys_platform == 'linux'" },
     { name = "unilab", extra = ["mujoco"] },
     { name = "unilab-rl" },
+    { name = "unisim-core" },
 ]
 
 [package.metadata]
@@ -397,6 +398,7 @@ requires-dist = [
     { name = "torch", marker = "sys_platform == 'win32'", specifier = "==2.8.0", index = "https://download.pytorch.org/whl/cu128" },
     { name = "unilab", extras = ["mujoco"], specifier = "==1.1.0" },
     { name = "unilab-rl", specifier = "==1.0.0" },
+    { name = "unisim-core", specifier = ">=1.1.3,<1.1.5" },
 ]
 
 [[package]]
@@ -2819,14 +2821,14 @@ wheels = [
 
 [[package]]
 name = "unisim-core"
-version = "1.2.0"
+version = "1.1.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
     { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/bb/b7/2cf8626884236d9e14256fa4330b9e04a8a41598867ced1ac4030f827989/unisim_core-1.2.0.tar.gz", hash = "sha256:fccd67edbde98eeb16d2e6f9f5f8ce608dd2790266a673788897cbd9a42fa4ce", size = 253069, upload-time = "2026-09-10T05:19:05.388Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4a/52/6b276891a561c9cdfacd909cbe4e11437efd97064002e92851eaad2002ea/unisim_core-1.1.4.tar.gz", hash = "sha256:9a98c6189489100191ef93e8d5de4a5be051f2a38687ce51422f90ed4d182a19", size = 219821, upload-time = "2026-09-08T10:18:43.113Z" }
 
 [[package]]
 name = "urllib3"
