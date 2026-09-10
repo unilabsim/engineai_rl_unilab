@@ -10,6 +10,10 @@ EngineAI Robot RL Training on the UniLab Package Distribution
   <a href="https://www.apache.org/licenses/LICENSE-2.0"><img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="Apache-2.0 License"></a>
 </p>
 
+| ![walk](assets/teaser/walk.png) | ![dance1](assets/teaser/dance1.png) | ![dance2](assets/teaser/dance2.png) |
+|:-------------------------------:|:-----------------------------------:|:-----------------------------------:|
+|              walk               |               dance1                |               dance2                |
+
 `engineai_rl_unilab` trains EngineAI robots entirely on UniLab's PyPI distribution —
 no UniLab source checkout required. Training, playback, and the
 runner/learner/collector stack all come from the published `unilab` wheel; this repo
